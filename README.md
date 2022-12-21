@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/334922097.svg)](https://zenodo.org/badge/latestdoi/334922097)
+
 This repository contains code that was used in the analyses for the manuscript titled **Reductions of invertebrate herbivory due to land use are only partly explained by changes in plant and insect characteristics**.
 
 The main part of the analyses is contained in the following two files:
