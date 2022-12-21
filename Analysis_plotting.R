@@ -12,15 +12,145 @@ library(piecewiseSEM)
 library(parallel)
 library(cowplot)
 
+# standardisation function
+f_std <- function(x) {
+  if (is.numeric(x)){
+    (x - mean(x, na.rm = T)) / (2 * sd(x,  na.rm = T))
+  } else {
+    x
+  }
+}
+
+# define metric names for renaming ---------------------------------------------
+
+# community level
+metrics_comm <- c(system = "System",
+                    region = "Region",
+                    plot = "Plot",
+                    a.herb2.prop.comm = "Herb_rate_total",
+                    a.chewing.prop.comm = "Herb_rate_chewing",
+                    a.scraping.prop.comm = "Herb_rate_scraping",
+                    a.sucking.prop.comm = "Herb_rate_sucking",
+                    a.mines.prop.comm = "Herb_rate_mines",
+                    a.gallstot.prop.comm = "Herb_rate_galls",
+                    ForMI = "ForMI",
+                    Inonat = "Inonat",
+                    Idwcut = "Idwcut",
+                    Iharv = "Iharv",
+                    LUI = "LUI",
+                    F_std = "Fertilization",
+                    M_std = "Mowing",
+                    G_std = "Grazing",
+                    p.tax.comp.1 = "P_Com_Tax_axis1",
+                    p.tax.comp.2 = "P_Com_Tax_axis2",
+                    p.tax.comp.3 = "P_Com_Tax_axis3",
+                    p.fgr.comp.grass = "P_Com_Fun_grass",
+                    p.fgr.comp.legume = "P_Com_Fun_legume",
+                    p.fgr.comp.forb = "P_Com_Fun_forb",
+                    p.fgr.comp.tree = "P_Com_Fun_tree",
+                    p.fgr.comp.geophyt = "P_Com_Fun_geophyte",
+                    p.fun.comp.ldmc = "P_Com_Fun_LDMC",
+                    p.fun.comp.sla = "P_Com_Fun_SLA",
+                    p.fun.comp.N = "P_Com_Fun_N",
+                    p.fun.comp.P = "P_Com_Fun_P",
+                    p.fun.comp.Ca = "P_Com_Fun_Ca",
+                    p.fun.comp.Mg = "P_Com_Fun_Mg",
+                    p.fun.comp.lignin = "P_Com_Fun_lignin",
+                    p.fun.comp.prim.fiber = "P_Com_Fun_primfiber",
+                    p.tax.abund = "P_Abu_Tax_cover",
+                    p.fun.abund.bm = "P_Abu_Fun_biomass",
+                    p.fun.abund.lai = "P_Abu_Fun_LAI",
+                    p.tax.div.0 = "P_Div_Tax_q0",
+                    p.tax.div.1 = "P_Div_Tax_q1",
+                    p.tax.div.2 = "P_Div_Tax_q2",
+                    p.fun.div.0 = "P_Div_Fun_q0",
+                    p.fun.div.1 = "P_Div_Fun_q1",
+                    p.fun.div.2 = "P_Div_Fun_q2",
+                    i.tax.comp.1 = "H_Com_Tax_axis1",
+                    i.tax.comp.2 = "H_Com_Tax_axis2",
+                    i.tax.comp.3 = "H_Com_Tax_axis3",
+                    i.fun.comp.1 =  "H_Com_Fun_axis1",
+                    i.fun.comp.2 =  "H_Com_Fun_axis2",
+                    i.fun.comp.3 = "H_Com_Fun_axis3",
+                    i.tax.abund.sort = "H_Abu_Tax_all",
+                    i.tax.abund.det = "H_Abu_Tax_id",
+                    i.fun.abund = "H_Abu_Fun_met",
+                    i.tax.div.0 = "H_Div_Tax_q0",
+                    i.tax.div.1 = "H_Div_Tax_q1",
+                    i.tax.div.2 = "H_Div_Tax_q2",
+                    i.fun.div.0 = "H_Div_Fun_q0",
+                    i.fun.div.1 = "H_Div_Fun_q1",
+                    i.fun.div.2 = "H_Div_Fun_q2")
+
+# species level
+metrics_spec <- c(system = "System",
+                    region = "Region",
+                    plot = "Plot",
+                    Host_Name_std = "Pl_spec",
+                    a.herb2.prop = "Herb_rate_total",
+                    a.chewing.prop = "Herb_rate_chewing",
+                    a.scraping.prop = "Herb_rate_scraping",
+                    a.sucking.prop = "Herb_rate_sucking",
+                    a.mines.prop = "Herb_rate_mines",
+                    a.gallstot.prop = "Herb_rate_galls",
+                    ForMI = "ForMI_std",
+                    Inonat = "Inonat_std",
+                    Idwcut = "Idwcut_std",
+                    Iharv = "Iharv_std",
+                    LUI = "LUI_std",
+                    F_std = "Fertilization_std",
+                    M_std = "Mowing_std",
+                    G_std = "Grazing_std",
+                    p.fgr.comp.grass = "P_Com_Fun_grass",
+                    p.fgr.comp.legume = "P_Com_Fun_legume",
+                    p.fgr.comp.forb = "P_Com_Fun_forb",
+                    p.fgr.comp.tree = "P_Com_Fun_tree",
+                    p.fgr.comp.geophyt = "P_Com_Fun_geophyte",
+                    p.fun.comp.ldmc = "P_Com_Fun_LDMC",
+                    p.fun.comp.sla = "P_Com_Fun_SLA",
+                    p.tax.abund = "P_Abu_Tax_cover",
+                    p.fun.abund = "P_Abu_Fun_biomass",
+                    i.tax.comp.iszero = "H_Com_0",
+                    i.tax.comp.1 = "H_Com_Tax_axis1",
+                    i.tax.comp.2 = "H_Com_Tax_axis2",
+                    i.tax.comp.3 = "H_Com_Tax_axis3",
+                    i.fun.comp.1 =  "H_Com_Fun_axis1",
+                    i.fun.comp.2 =  "H_Com_Fun_axis2",
+                    i.fun.comp.3 = "H_Com_Fun_axis3",
+                    i.tax.abund = "H_Abu_Tax_id",
+                    i.fun.abund = "H_Abu_Fun_met",
+                    i.tax.div.0 = "H_Div_Tax_q0",
+                    i.tax.div.1 = "H_Div_Tax_q1",
+                    i.tax.div.2 = "H_Div_Tax_q2",
+                    i.fun.div.0 = "H_Div_Fun_q0",
+                    i.fun.div.1 = "H_Div_Fun_q1",
+                    i.fun.div.2 = "H_Div_Fun_q2")
+
 # load data --------------------------------------------------------------------
 
 # check Community_metrics.R for calculation of community metrics in the following data sets
 
-# Community-level data
+# Community-level data (BEXIS ID 31412, https://www.bexis.uni-jena.de/)
 d_comm <- read.table("Data/Dat_communitylevel.txt", header = T)
 
-# Species-level data
+d_comm <- d_comm %>% 
+  mutate_all(~ifelse(. == "nd", NA, .)) %>% 
+  mutate_at(vars(-c(System, Region, Plot)), ~ as.numeric(.)) %>% 
+  rename(metrics_comm) %>% 
+  group_by(system) %>% 
+  mutate_at(vars(-starts_with("a.")),
+            ~ f_std(.)) %>% 
+  ungroup() %>% 
+  mutate(a.herb2.prop.comm_log = log(a.herb2.prop.comm))
+
+# Species-level data (BEXIS ID 31413, https://www.bexis.uni-jena.de/)
 d_spec <- read.table("Data/Dat_specieslevel.txt", header = T)
+
+d_spec <- d_spec %>% 
+  mutate_all(~ifelse(. == "nd", NA, .)) %>% 
+  mutate_at(vars(-c(System, Region, Plot, Pl_spec, H_Com_0)), ~ as.numeric(.)) %>% 
+  rename(metrics_spec) %>% 
+  mutate(a.herb2.prop_log = log(a.herb2.prop + 0.001))
 
 d_spec <- d_spec %>% 
   mutate_at(vars(p.fgr.comp.grass, p.fgr.comp.forb, p.fgr.comp.tree, 
@@ -90,8 +220,8 @@ varlabs <- c("p.tax.comp.1" = expression("Com"["Tax" ]~"axis1"),
              "F_std" = "Fertilisation",
              "M_std" = "Mowing",
              "G_std" = "Grazing",
-             "regionSch" = "region SCH",
-             "regionHai" = "region HAI",
+             "regionSCH" = "region SCH",
+             "regionHAI" = "region HAI",
              "a.herb2.prop.comm_log" = "Herbivory rate",
              "a.herb2.prop_log" = "Herbivory rate",
              "direct" = "direct",
@@ -779,7 +909,7 @@ mod_damage_types %>%
   unnest(cols = everything()) %>% 
   rename(lower = `2.5 %`,
          upper = `97.5 %`) %>% 
-  filter(!var %in% c("(Intercept)", "regionHai", "regionSch"),
+  filter(!var %in% c("(Intercept)", "regionHAI", "regionSCH"),
          !(damage_type == "a.gallstot.prop.comm" & system == "Grassland")) %>% 
   mutate(var = factor(var, levels = rev(c("ForMI", "Inonat", "Iharv", "Idwcut",
                                           "LUI", "G_std", "M_std", "F_std")),
@@ -855,7 +985,7 @@ mod_damage_types_sample %>%
   unnest(cols = everything()) %>% 
   rename(lower = `2.5 %`,
          upper = `97.5 %`) %>% 
-  filter(!var %in% c("(Intercept)", "regionHai", "regionSch")) %>% 
+  filter(!var %in% c("(Intercept)", "regionHAI", "regionSCH")) %>% 
   mutate(var = factor(var, levels = rev(c("ForMI", "Inonat", "Iharv", "Idwcut",
                                           "LUI", "G_std", "M_std", "F_std")),
                       labels = rev(c("ForMI", "Inonat", "Iharv", "Idwcut",
@@ -1281,7 +1411,7 @@ d_f_path_plotlevel_z <- d_comm %>%
          i.fun.div.0, i.fun.div.1, i.fun.div.2) %>% 
   filter_all(~!is.na(.)) %>%  # remove all entries with NAs in any of the variables
   mutate_at(vars(-c(plot, region, RW, HW, a.herb2.prop.comm_log)), 
-            ~ (. - mean(., na.rm = T)) / (2 * sd(.,  na.rm = T))) 
+            ~ f_std(.)) 
 
 # ForMI combined ---------------------------------------------------------------.
 
@@ -1381,7 +1511,7 @@ pathways_f_plot <- data.frame()
 vars <- unique(d_semcoefs_f_plot$response)
 vars <- vars[!vars %in% c("ForMI")]
 
-for (var_i in c("ForMI", "regionHai", "regionSch", vars)){
+for (var_i in c("ForMI", "regionHAI", "regionSCH", vars)){
   pathways_var_i <- data.frame()
   
   
@@ -1544,7 +1674,7 @@ vars <- unique(d_semcoefs_f_plot_sep$response)
 vars <- vars[!vars %in% c("Inonat", "Idwcut", "Iharv")]
 
 
-for (var_i in c("Inonat", "Idwcut", "Iharv", "regionHai", "regionSch", vars)){
+for (var_i in c("Inonat", "Idwcut", "Iharv", "regionHAI", "regionSCH", vars)){
   pathways_var_i <- data.frame()
   
   
@@ -1625,7 +1755,7 @@ d_g_path_plotlevel_z <- d_comm %>%
          i.fun.div.0, i.fun.div.1, i.fun.div.2) %>% 
   filter_all(~!is.na(.)) %>%  # remove all entries with NAs in any of the variables
   mutate_at(vars(-c(plot, region, RW, HW, a.herb2.prop.comm_log)), 
-            ~ (. - mean(., na.rm = T)) / (2 * sd(.,  na.rm = T))) 
+            ~ f_std(.)) 
 
 # LUI combined -----------------------------------------------------------------.
 
@@ -1721,7 +1851,7 @@ pathways_g_plot <- data.frame()
 vars <- unique(d_semcoefs_g_plot$response)
 vars <- vars[!vars %in% c("LUI")]
 
-for (var_i in c("LUI", "regionHai", "regionSch", vars)){
+for (var_i in c("LUI", "regionHAI", "regionSCH", vars)){
   pathways_var_i <- data.frame()
   
   
@@ -1900,7 +2030,7 @@ pathways_g_plot_sep <- data.frame()
 vars <- unique(d_semcoefs_g_plot_sep$response)
 vars <- vars[!vars %in% c("M_std", "F_std", "G_std")]
 
-for (var_i in c("M_std", "F_std", "G_std", "regionHai", "regionSch", vars)){
+for (var_i in c("M_std", "F_std", "G_std", "regionHAI", "regionSCH", vars)){
   pathways_var_i <- data.frame()
   
   
@@ -1975,8 +2105,9 @@ d_f_path_plotlevel_z <- d_spec %>%
          i.fun.abund,
          i.tax.div.0, i.tax.div.1, i.tax.div.2,
          i.fun.div.0, i.fun.div.1, i.fun.div.2) %>% 
-  filter_all(~!is.na(.)) # remove all entries with NAs in any of the variables
-
+  filter_all(~!is.na(.)) %>%  # remove all entries with NAs in any of the variables
+  mutate_at(vars(-c(a.herb2.prop_log, ForMI, Inonat, Iharv, Idwcut)),
+            ~ f_std(.))
 
 # ForMI combined ---------------------------------------------------------------.
 
@@ -2073,7 +2204,7 @@ pathways_f_sample <- data.frame()
 vars <- unique(d_semcoefs_f_sample$response)
 vars <- vars[!vars %in% c("ForMI")]
 
-for (var_i in c("ForMI", "regionHai", "regionSch", vars)){
+for (var_i in c("ForMI", "regionHAI", "regionSCH", vars)){
   pathways_var_i <- data.frame()
   
   
@@ -2231,7 +2362,7 @@ pathways_f_sample_sep <- data.frame()
 vars <- unique(d_semcoefs_f_sample_sep$response)
 vars <- vars[!vars %in% c("Inonat", "Iharv", "Idwcut")]
 
-for (var_i in c("Inonat", "Iharv", "Idwcut", "regionHai", "regionSch", vars)){
+for (var_i in c("Inonat", "Iharv", "Idwcut", "regionHAI", "regionSCH", vars)){
   pathways_var_i <- data.frame()
   
   
@@ -2305,7 +2436,9 @@ d_f_path_plotlevel_z <- d_spec %>%
          i.fun.abund,
          i.fun.div.0, i.fun.div.1, i.fun.div.2,
          i.tax.div.0, i.tax.div.1, i.tax.div.2,) %>% 
-  filter_all(~!is.na(.)) # remove all entries with NAs in any of the variables
+  filter_all(~!is.na(.)) %>%  # remove all entries with NAs in any of the variables
+  mutate_at(vars(-c(a.herb2.prop_log, LUI, M_std, F_std, G_std)),
+            ~ f_std(.))
 
 # LUI combined -----------------------------------------------------------------.
 
@@ -2407,7 +2540,7 @@ pathways_g_sample <- data.frame()
 vars <- unique(d_semcoefs_g_sample$response)
 vars <- vars[!vars %in% c("LUI")]
 
-for (var_i in c("LUI", "regionHai", "regionSch", vars)){
+for (var_i in c("LUI", "regionHAI", "regionSCH", vars)){
   pathways_var_i <- data.frame()
   
   
@@ -2556,7 +2689,7 @@ pathways_g_sample_sep <- data.frame()
 vars <- unique(d_semcoefs_g_sample_sep$response)
 vars <- vars[!vars %in% c("M_std", "F_std", "G_std")]
 
-for (var_i in c("M_std", "F_std", "G_std", "regionHai", "regionSch", vars)){
+for (var_i in c("M_std", "F_std", "G_std", "regionHAI", "regionSCH", vars)){
   pathways_var_i <- data.frame()
   
   
@@ -2670,7 +2803,7 @@ pathways_sum %>%
 # function to extract indirect pathways
 f_ind_pathways <- function(data, luivars){
   covars <- unique(data$predictor)
-  covars <- covars[!covars %in% c("regionHai", "regionSch", luivars)]
+  covars <- covars[!covars %in% c("regionHAI", "regionSCH", luivars)]
   
   out <- data.frame()
   
@@ -2879,7 +3012,7 @@ d_semcoefs_f_plot2 <- d_semcoefs_f_plot2 %>%
   mutate(sign.code = as.character(sign.code),
          response = as.character(response)) %>% 
   bind_rows(d_R2_f_plot) %>% 
-  mutate(predictor = factor(predictor, levels = c("regionHai", "regionSch",
+  mutate(predictor = factor(predictor, levels = c("regionHAI", "regionSCH",
                                                   "ForMI",
                                                   var_order, "R2")),
          response = factor(response, levels = c("ForMI", var_order)))
@@ -3041,7 +3174,7 @@ d_semcoefs_f_plot_sep2 <- d_semcoefs_f_plot_sep2 %>%
   mutate(sign.code = as.character(sign.code),
          response = as.character(response)) %>% 
   bind_rows(d_R2_f_plot_sep) %>% 
-  mutate(predictor = factor(predictor, levels = c("regionHai", "regionSch",
+  mutate(predictor = factor(predictor, levels = c("regionHAI", "regionSCH",
                                                   "Idwcut", "Iharv", "Inonat",
                                                   var_order, "R2")),
          response = factor(response, levels = c("Idwcut", "Iharv", "Inonat", var_order)))
@@ -3204,7 +3337,7 @@ d_semcoefs_g_plot2 <- d_semcoefs_g_plot2 %>%
   mutate(sign.code = as.character(sign.code),
          response = as.character(response)) %>% 
   bind_rows(d_R2_g_plot) %>% 
-  mutate(predictor = factor(predictor, levels = c("regionHai", "regionSch",
+  mutate(predictor = factor(predictor, levels = c("regionHAI", "regionSCH",
                                                   "LUI",
                                                   var_order, "R2")),
          response = factor(response, levels = c("LUI", var_order)))
@@ -3367,7 +3500,7 @@ d_semcoefs_g_plot_sep2 <- d_semcoefs_g_plot_sep2 %>%
   mutate(sign.code = as.character(sign.code),
          response = as.character(response)) %>% 
   bind_rows(d_R2_g_plot_sep) %>% 
-  mutate(predictor = factor(predictor, levels = c("regionHai", "regionSch",
+  mutate(predictor = factor(predictor, levels = c("regionHAI", "regionSCH",
                                                   "F_std", "M_std", "G_std",
                                                   var_order, "R2")),
          response = factor(response, levels = c("F_std", "M_std", "G_std", var_order)))
@@ -3545,7 +3678,7 @@ d_semcoefs_f_sample2 <- d_semcoefs_f_sample2 %>%
   mutate(sign.code = as.character(sign.code),
          response = as.character(response)) %>% 
   bind_rows(d_R2_f_sample) %>% 
-  mutate(predictor = factor(predictor, levels = c("regionHai", "regionSch",
+  mutate(predictor = factor(predictor, levels = c("regionHAI", "regionSCH",
                                                   "ForMI",
                                                   var_order, "R2c", "R2m")),
          response = factor(response, levels = c( "ForMI", var_order)))
@@ -3722,7 +3855,7 @@ d_semcoefs_f_sample_sep2 <- d_semcoefs_f_sample_sep2 %>%
   mutate(sign.code = as.character(sign.code),
          response = as.character(response)) %>% 
   bind_rows(d_R2_f_sample_sep) %>% 
-  mutate(predictor = factor(predictor, levels = c("regionHai", "regionSch",
+  mutate(predictor = factor(predictor, levels = c("regionHAI", "regionSCH",
                                                   "Idwcut", "Iharv", "Inonat",
                                                   var_order, "R2c", "R2m")),
          response = factor(response, levels = c("Idwcut", "Iharv", "Inonat", var_order)))
@@ -3893,7 +4026,7 @@ d_semcoefs_g_sample2 <- d_semcoefs_g_sample2 %>%
   mutate(sign.code = as.character(sign.code),
          response = as.character(response)) %>% 
   bind_rows(d_R2_g_sample) %>% 
-  mutate(predictor = factor(predictor, levels = c("regionHai", "regionSch",
+  mutate(predictor = factor(predictor, levels = c("regionHAI", "regionSCH",
                                                   "LUI",
                                                   var_order, "R2c", "R2m")),
          response = factor(response, levels = c( "LUI", var_order)))
@@ -4065,7 +4198,7 @@ d_semcoefs_g_sample_sep2 <- d_semcoefs_g_sample_sep2 %>%
   mutate(sign.code = as.character(sign.code),
          response = as.character(response)) %>% 
   bind_rows(d_R2_g_sample_sep) %>% 
-  mutate(predictor = factor(predictor, levels = c("regionHai", "regionSch",
+  mutate(predictor = factor(predictor, levels = c("regionHAI", "regionSCH",
                                                   "F_std", "M_std", "G_std",
                                                   var_order, "R2c", "R2m")),
          response = factor(response, levels = c( "F_std", "M_std", "G_std", var_order)))
