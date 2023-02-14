@@ -1,6 +1,9 @@
-[![DOI](https://zenodo.org/badge/334922097.svg)](https://zenodo.org/badge/latestdoi/334922097)
+Invertebrate herbivory along land-use intensity gradients
+======
 
-This repository contains code that was used in the analyses for the manuscript titled **Reductions of invertebrate herbivory due to land use are only partly explained by changes in plant and insect characteristics**.
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7469081.svg)](https://doi.org/10.5281/zenodo.7469081)
+
+This repository contains code that was used in the analyses for the manuscript titled **Reduction of invertebrate herbivory by land use is only partly explained by changes in plant and insect characteristics**.
 
 The main part of the analyses is contained in the following two files:
 
