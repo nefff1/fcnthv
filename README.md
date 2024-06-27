@@ -3,7 +3,7 @@ Invertebrate herbivory along land-use intensity gradients
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7469081.svg)](https://doi.org/10.5281/zenodo.7469081)
 
-This repository contains code that was used in the analyses for the manuscript titled **Reduction of invertebrate herbivory by land use is only partly explained by changes in plant and insect characteristics**.
+This repository contains code that was used in the analyses for the publication: Neff, F., Prati, D., Achury, R., Ambarlı, D., Bolliger, R., Brändle, M., Freitag, M., Hölzel, N., Kleinebecker, T., Knecht, A., Schäfer, D., Schall, P., Seibold, S., Staab, M., Weisser, W. W., Pellissier, L., & Gossner, M. M. (2023). **Reduction of invertebrate herbivory by land use is only partly explained by changes in plant and insect characteristics**. *Ecological Monographs, 93(2), e1571*. [https://doi.org/10.1002/ecm.1571](https://doi.org/10.1002/ecm.1571).
 
 The main part of the analyses is contained in the following two files:
 
